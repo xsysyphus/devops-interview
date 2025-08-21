@@ -68,8 +68,6 @@ git clone <seu-fork>
 cd devops-interview
 ```
 
-```
-
 ## 📞 Suporte
 
 - **Dúvidas sobre requisitos**: Abra uma issue no repositório ou entre em contato com o avaliador 
