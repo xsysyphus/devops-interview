@@ -9,8 +9,8 @@ Implementar uma infraestrutura de produção para hospedar uma API Python que re
 ### ✅ Requisitos Obrigatórios
 
 1. **API no ECS Fargate** - Deploy da aplicação Python fornecida
-2. **ALB Público** - Load balancer com SSL/TLS 
-3. **Nginx API Gateway** - Proxy reverso com **mTLS obrigatório**
+2. **ALB Público** - Load balancer com SSL/TLS. Deve rotear o tráfego validado pelo Nginx para a API no ECS.
+3. **Nginx API Gateway** - Proxy reverso com **mTLS obrigatório**. Após validação, encaminhar requisições para o ALB → ECS
 4. **Pipeline GitHub Actions** - CI/CD automatizado
 5. **Documentação completa** - Setup e troubleshooting
 
