@@ -77,40 +77,38 @@ A solução implementa uma API Python Flask protegida por mTLS (mutual TLS) util
 
 ## 2. Decisões Técnicas
 
-### Por que ECS Fargate?
+### Requisitos Pré-Definidos
 
-**Vantagens:**
-- **Serverless**: Sem gerenciamento de instâncias EC2
-- **Escalabilidade automática**: Baseada na demanda
-- **Segurança**: Isolamento de rede por task
-- **Integração nativa**: Com outros serviços AWS
-- **Custo-efetivo**: Pay-per-use, sem recursos ociosos
+Os seguintes componentes foram **definidos como requisitos obrigatórios** no desafio:
 
-**Alternativas consideradas:**
-- EC2 + Docker: Maior complexidade de gerenciamento
-- Lambda: Limitações de timeout e cold start para APIs
-- EKS: Overhead desnecessário para essa escala
+- **ECS Fargate**: Plataforma de containers serverless
+- **Load Balancer Público**: Para exposição da aplicação
+- **Nginx com mTLS**: Gateway de autenticação obrigatória
+- **GitHub Actions**: Pipeline de CI/CD
+- **API Python**: Aplicação Flask fornecida
 
-### Por que Network Load Balancer (NLB)?
+### Decisões de Implementação
 
-**Decisão crítica:** Inicialmente foi implementado Application Load Balancer (ALB), mas foi migrado para NLB durante o troubleshooting.
+#### Network Load Balancer vs Application Load Balancer
 
-**Problema com ALB:**
+**Decisão crítica:** Migração de ALB para NLB durante a implementação.
+
+**Problema identificado com ALB:**
 - Terminava o SSL/TLS, impedindo o mTLS no Nginx
 - Não passava certificados cliente para downstream
+- Incompatível com autenticação mútua end-to-end
 
-**Solução com NLB:**
+**Solução implementada com NLB:**
 - **SSL Passthrough**: Mantém conexão TLS end-to-end
 - **Performance**: Layer 4, menor latência
 - **mTLS**: Permite validação de certificado cliente no Nginx
 
-### Por que mTLS no Nginx?
+#### Configuração mTLS Flexível
 
-**Benefícios:**
-- **Autenticação mútua**: Cliente e servidor se validam
-- **Flexibilidade**: Configuração granular por endpoint
-- **Performance**: Validação em nível de proxy
-- **Exceções**: Permite endpoints públicos (/health)
+**Implementação escolhida:**
+- **Endpoints públicos**: /health sem autenticação
+- **Endpoints protegidos**: Todos os demais com mTLS obrigatório
+- **Validação granular**: Por location no Nginx
 
 **Configuração implementada:**
 ```nginx
@@ -131,13 +129,13 @@ location / {
 }
 ```
 
-### Por que Service Discovery?
+#### Service Discovery (AWS Cloud Map)
 
-**AWS Cloud Map** foi escolhido para:
-- **DNS dinâmico**: Resolução automática de IPs das tasks
+**Justificativa da escolha:**
+- **DNS dinâmico**: Resolução automática de IPs das tasks ECS
 - **Health checks**: Remoção automática de instâncias não saudáveis
 - **Multi-AZ**: Distribuição automática de carga
-- **Integração ECS**: Registro automático de tasks
+- **Integração nativa**: Registro automático com ECS Fargate
 
 ---
 
