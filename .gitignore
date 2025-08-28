@@ -1,0 +1,20 @@
+# Arquivos e diretórios do Terraform
+**/.terraform/*
+*.tfstate
+*.tfstate.*
+crash.log
+*.tfvars
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# Certificados - SEGURANÇA: Nunca commite chaves privadas em produção!
+# Para este desafio educacional, permitimos temporariamente
+nginx/certs/*.key
+nginx/certs/*.csr
+nginx/certs/*.srl
+
+# Arquivos de sistema
+.DS_Store
+Thumbs.db
