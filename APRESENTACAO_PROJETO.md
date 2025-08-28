@@ -109,3 +109,6 @@ A solução implementada não apenas atende a todos os requisitos obrigatórios 
 - **Automatizada**: Com pipeline CI/CD completo e IaC versionada
 
 Esta implementação demonstra não apenas conhecimento técnico, mas também uma visão holística de como construir e operar sistemas modernos na nuvem.
+
+
+.
