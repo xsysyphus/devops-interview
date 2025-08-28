@@ -91,7 +91,7 @@ Os seguintes componentes foram **definidos como requisitos obrigatórios** no de
 
 #### Network Load Balancer vs Application Load Balancer
 
-**Decisão crítica:** Migração de ALB para NLB durante a implementação.
+**Decisão crítica:** Inicialmente foi implementado Application Load Balancer (ALB), mas foi migrado para NLB durante o troubleshooting.
 
 **Problema identificado com ALB:**
 - Terminava o SSL/TLS, impedindo o mTLS no Nginx
@@ -102,8 +102,6 @@ Os seguintes componentes foram **definidos como requisitos obrigatórios** no de
 - **SSL Passthrough**: Mantém conexão TLS end-to-end
 - **Performance**: Layer 4, menor latência
 - **mTLS**: Permite validação de certificado cliente no Nginx
-
-#### Configuração mTLS Flexível
 
 **Implementação escolhida:**
 - **Endpoints públicos**: /health sem autenticação
@@ -132,10 +130,10 @@ location / {
 #### Service Discovery (AWS Cloud Map)
 
 **Justificativa da escolha:**
-- **DNS dinâmico**: Resolução automática de IPs das tasks ECS
+- **DNS dinâmico**: Resolução automática de IPs das tasks
 - **Health checks**: Remoção automática de instâncias não saudáveis
 - **Multi-AZ**: Distribuição automática de carga
-- **Integração nativa**: Registro automático com ECS Fargate
+- **Integração ECS**: Registro automático de tasks
 
 ---
 

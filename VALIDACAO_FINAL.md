@@ -1,17 +1,17 @@
-# 🧪 VALIDAÇÃO FINAL - Guia de Testes
+# VALIDAÇÃO FINAL - Guia de Testes
 
 Este arquivo contém todos os testes necessários para validar se sua implementação está funcionando corretamente.
 
-## 📋 PRÉ-REQUISITOS
+## PRÉ-REQUISITOS
 
 Antes de executar os testes, certifique-se de que:
 
-1. ✅ **Terraform aplicado** com sucesso (`terraform apply`)
-2. ✅ **Certificados gerados** (executar `nginx/certs/gerar_certificados.sh`)
-3. ✅ **Deploy realizado** (executar `deploy.ps1`)
-4. ✅ **DNS configurado** (se usando domínio customizado)
+1. **Terraform aplicado** com sucesso (`terraform apply`)
+2. **Certificados gerados** (executar `nginx/certs/gerar_certificados.sh`)
+3. **Deploy realizado** (executar `deploy.ps1`)
+4. **DNS configurado** (se usando domínio customizado)
 
-## 🎯 TESTES OBRIGATÓRIOS
+## TESTES OBRIGATÓRIOS
 
 ### **Teste 1: Health Check (Público)**
 ```bash
@@ -43,7 +43,7 @@ curl -k --cert ./nginx/certs/cliente-[TIMESTAMP].crt \
 ```
 **Resultado Esperado:** `200 OK` com informações da API
 
-## 🔍 TESTES ADICIONAIS
+## TESTES ADICIONAIS
 
 ### **Teste 5: Verificar SSL/TLS**
 ```bash
@@ -66,18 +66,18 @@ curl -k --cert ./nginx/certs/cliente-[TIMESTAMP].crt \
 ```
 **Meta:** Tempo de resposta < 2 segundos
 
-## 📊 RESULTADOS ESPERADOS
+## RESULTADOS ESPERADOS
 
 | **Teste** | **Comando** | **HTTP Code** | **Status** |
 |-----------|-------------|---------------|------------|
-| Health Check | `curl /health` | `200` | ✅ SUCESSO |
-| API sem cert | `curl /api/webhook` | `403` | ✅ SUCESSO (mTLS bloqueou) |
-| API com cert | `curl --cert --key /api/webhook` | `200` | ✅ SUCESSO |
-| Endpoint raiz | `curl --cert --key /` | `200` | ✅ SUCESSO |
+| Health Check | `curl /health` | `200` | SUCESSO |
+| API sem cert | `curl /api/webhook` | `403` | SUCESSO (mTLS bloqueou) |
+| API com cert | `curl --cert --key /api/webhook` | `200` | SUCESSO |
+| Endpoint raiz | `curl --cert --key /` | `200` | SUCESSO |
 
-## 🛠️ TROUBLESHOOTING
+## TROUBLESHOOTING
 
-### **❌ Erro 502/504 (Bad Gateway/Timeout)**
+### **Erro 502/504 (Bad Gateway/Timeout)**
 **Possíveis Causas:**
 - Serviços ECS não estão rodando
 - Service Discovery com problemas
@@ -96,7 +96,7 @@ aws logs tail "/ecs/[SEU_PROJETO]/api" --follow --region [SUA_REGIAO]
 aws ecs update-service --cluster [SEU_PROJETO]-cluster --service [SEU_PROJETO]-nginx-service --force-new-deployment --region [SUA_REGIAO]
 ```
 
-### **❌ Erro 403 para /health**
+### **Erro 403 para /health**
 **Causa:** Configuração incorreta do mTLS no Nginx
 
 **Solução:** Verificar `nginx.conf`:
@@ -107,7 +107,7 @@ location /health {
 }
 ```
 
-### **❌ Certificado Inválido**
+### **Certificado Inválido**
 **Causa:** Certificados mal gerados ou expirados
 
 **Solução:**
@@ -121,7 +121,7 @@ docker build -t [SEU_PROJETO]-nginx ./nginx/
 # ... push e redeploy
 ```
 
-### **❌ DNS não resolve**
+### **DNS não resolve**
 **Possíveis Causas:**
 - DNS não configurado corretamente
 - Aguardar propagação DNS
@@ -136,7 +136,7 @@ dig [SEU_DOMINIO]
 terraform output alb_dns_name
 ```
 
-## ✅ CHECKLIST FINAL
+## CHECKLIST FINAL
 
 - [ ] **Teste 1** (Health Check): `200 OK`
 - [ ] **Teste 2** (API sem cert): `403 Forbidden`  
@@ -148,14 +148,3 @@ terraform output alb_dns_name
 - [ ] **Logs**: Sem erros críticos
 - [ ] **Monitoramento**: CloudWatch funcionando
 - [ ] **Documentação**: Completa e atualizada
-
-## 🏆 CRITÉRIOS DE APROVAÇÃO
-
-Para considerar a implementação **APROVADA**, todos os seguintes devem estar funcionando:
-
-1. ✅ **API acessível via HTTPS**
-2. ✅ **mTLS rejeitando requests sem certificado** (403)
-3. ✅ **mTLS aceitando requests com certificado válido** (200)
-4. ✅ **Health check público** funcionando (200)
-5. ✅ **Performance adequada** (< 2s de resposta)
-6. ✅ **Infraestrutura estável** (sem erros 5xx)
