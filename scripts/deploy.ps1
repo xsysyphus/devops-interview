@@ -7,13 +7,13 @@
 # --- Configuração Manual ---
 # Preencha estas variáveis com os valores da sua infraestrutura.
 # Você pode obtê-las rodando 'terraform output' na pasta /terraform.
-$awsRegion = "us-east-2"
-$ecrRegistryUrl = "693014165328.dkr.ecr.us-east-2.amazonaws.com"
-$ecrRepositoryApi = "teste-api-api"
-$ecrRepositoryNginx = "teste-api-nginx"
-$ecsClusterName = "teste-api-cluster"
-$ecsServiceApi = "teste-api-api-service"
-$ecsServiceNginx = "teste-api-nginx-service"
+$awsRegion = "us-east-1"
+$ecrRegistryUrl = "123456789012.dkr.ecr.us-east-1.amazonaws.com"
+$ecrRepositoryApi = "minha-api-api"
+$ecrRepositoryNginx = "minha-api-nginx"
+$ecsClusterName = "minha-api-cluster"
+$ecsServiceApi = "minha-api-api-service"
+$ecsServiceNginx = "minha-api-nginx-service"
 
 Write-Host "Configuracoes carregadas:"
 Write-Host " - Regiao: $awsRegion"

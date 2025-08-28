@@ -18,7 +18,7 @@ CITY="Sao Paulo"
 ORG_CA="Minha CA"
 ORG_SERVER="Meu Servidor"
 ORG_CLIENT="Meu Cliente"
-COMMON_NAME_SERVER="api.bodyharmony.life"
+COMMON_NAME_SERVER="api.exemplo.com"
 
 # Criar diretório se não existir
 mkdir -p $(dirname "$0")
@@ -140,5 +140,5 @@ echo "  - Use $CLIENT_CRT e $CLIENT_KEY para testes"
 echo "  - Para gerar mais clientes, execute este script novamente"
 echo ""
 echo "🧪 Teste com curl:"
-echo "curl -k --cert ./$CLIENT_CRT --key ./$CLIENT_KEY https://api.bodyharmony.life/api/webhook"
+echo "curl -k --cert ./$CLIENT_CRT --key ./$CLIENT_KEY https://[SEU_NLB_DNS]/api/webhook"
 echo ""

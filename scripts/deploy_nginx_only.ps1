@@ -4,11 +4,11 @@
 Write-Host "Iniciando deploy da configuracao corrigida do Nginx..." -ForegroundColor Yellow
 
 # Configurações - Preencha com seus valores
-$awsRegion = "us-east-2"
-$ecrRegistry = "693014165328.dkr.ecr.us-east-2.amazonaws.com"
-$ecsCluster = "teste-api-cluster"
-$nginxService = "teste-api-nginx-service"
-$nginxRepo = "teste-api-nginx"
+$awsRegion = "us-east-1"
+$ecrRegistry = "123456789012.dkr.ecr.us-east-1.amazonaws.com"
+$ecsCluster = "minha-api-cluster"
+$nginxService = "minha-api-nginx-service"
+$nginxRepo = "minha-api-nginx"
 
 # --- Login no ECR ---
 Write-Host "Efetuando login no Amazon ECR..." -ForegroundColor Yellow

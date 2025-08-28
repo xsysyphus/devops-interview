@@ -638,46 +638,46 @@ aws cloudwatch put-metric-alarm \
 
 ### ✅ Infraestrutura
 
-- [ ] **VPC criada** com subnets públicas e privadas
-- [ ] **NLB funcionando** com SSL passthrough
-- [ ] **ECS Cluster** com services rodando
-- [ ] **Service Discovery** resolvendo DNS interno
-- [ ] **ECR repositories** criados e funcionais
-- [ ] **Security Groups** configurados corretamente
-- [ ] **CloudWatch** coletando logs e métricas
+- [x] **VPC criada** com subnets públicas e privadas
+- [x] **NLB funcionando** com SSL passthrough
+- [x] **ECS Cluster** com services rodando
+- [x] **Service Discovery** resolvendo DNS interno
+- [x] **ECR repositories** criados e funcionais
+- [x] **Security Groups** configurados corretamente
+- [x] **CloudWatch** coletando logs e métricas
 
 ### ✅ Aplicação
 
-- [ ] **API Python** respondendo na porta 5000
-- [ ] **Nginx** funcionando como proxy reverso
-- [ ] **Certificados SSL/TLS** válidos e configurados
-- [ ] **Health check** acessível sem autenticação
-- [ ] **Endpoints da API** protegidos por mTLS
+- [x] **API Python** respondendo na porta 5000
+- [x] **Nginx** funcionando como proxy reverso
+- [x] **Certificados SSL/TLS** válidos e configurados
+- [x] **Health check** acessível sem autenticação
+- [x] **Endpoints da API** protegidos por mTLS
 
 ### ✅ Segurança
 
-- [ ] **mTLS configurado** e funcionando
-- [ ] **Certificados cliente** válidos gerados
-- [ ] **Rejeição sem certificado** (403 Forbidden)
-- [ ] **Aceitação com certificado** (200 OK)
-- [ ] **SSL/TLS protocols** seguros (1.2+)
-- [ ] **Strong ciphers** configurados
+- [x] **mTLS configurado** e funcionando
+- [x] **Certificados cliente** válidos gerados
+- [x] **Rejeição sem certificado** (403 Forbidden)
+- [x] **Aceitação com certificado** (200 OK)
+- [x] **SSL/TLS protocols** seguros (1.2+)
+- [x] **Strong ciphers** configurados
 
 ### ✅ Testes
 
-- [ ] **Teste 1**: `curl /health` → 200 OK
-- [ ] **Teste 2**: `curl /api/webhook` → 403 Forbidden
-- [ ] **Teste 3**: `curl --cert --key /api/webhook` → 200 OK
-- [ ] **Performance**: Response time < 1s
-- [ ] **Load test**: Múltiplas requisições simultâneas
+- [x] **Teste 1**: `curl /health` → 200 OK
+- [x] **Teste 2**: `curl /api/webhook` → 403 Forbidden
+- [x] **Teste 3**: `curl --cert --key /api/webhook` → 200 OK
+- [x] **Performance**: Response time < 1s
+- [x] **Load test**: Múltiplas requisições simultâneas
 
 ### ✅ DevOps
 
-- [ ] **IaC com Terraform** aplicado sem erros
-- [ ] **Pipeline CI/CD** configurado
-- [ ] **Deploy manual** funcionando
-- [ ] **Rollback** testado
-- [ ] **Documentação** completa
+- [x] **IaC com Terraform** aplicado sem erros
+- [x] **Pipeline CI/CD** configurado
+- [x] **Deploy manual** funcionando
+- [x] **Rollback** testado
+- [x] **Documentação** completa
 
 ---
 
@@ -823,10 +823,10 @@ aws sts get-caller-identity
 #### Verificar Status Geral
 ```bash
 # Status dos serviços ECS
-aws ecs describe-services --cluster [SEU_PROJETO]-cluster --services [SEU_PROJETO]-api-service teste-api-nginx-service
+aws ecs describe-services --cluster [SEU_PROJETO]-cluster --services [SEU_PROJETO]-api-service [SEU_PROJETO]-nginx-service
 
 # Status do NLB
-aws elbv2 describe-load-balancers --names teste-api-nlb
+aws elbv2 describe-load-balancers --names [SEU_PROJETO]-nlb
 
 # Status dos Target Groups
 aws elbv2 describe-target-health --target-group-arn TARGET_GROUP_ARN
@@ -835,32 +835,32 @@ aws elbv2 describe-target-health --target-group-arn TARGET_GROUP_ARN
 #### Logs em Tempo Real
 ```bash
 # Seguir logs da API
-aws logs tail "/ecs/teste-api/api" --follow
+aws logs tail "/ecs/[SEU_PROJETO]/api" --follow
 
 # Seguir logs do Nginx
-aws logs tail "/ecs/teste-api/nginx" --follow
+aws logs tail "/ecs/[SEU_PROJETO]/nginx" --follow
 
 # Filtrar apenas erros
-aws logs filter-log-events --log-group-name "/ecs/teste-api/nginx" --filter-pattern "ERROR"
+aws logs filter-log-events --log-group-name "/ecs/[SEU_PROJETO]/nginx" --filter-pattern "ERROR"
 ```
 
 #### Teste de Conectividade
 ```bash
 # Teste SSL básico
-openssl s_client -connect nlb-dns:443 -servername api.bodyharmony.life
+openssl s_client -connect [SEU_NLB_DNS]:443 -servername [SEU_DOMINIO_OU_IP]
 
 # Teste com certificado cliente
-openssl s_client -connect nlb-dns:443 -cert client.crt -key client.key
+openssl s_client -connect [SEU_NLB_DNS]:443 -cert client.crt -key client.key
 
 # Teste curl com debug
-curl -k -v --cert client.crt --key client.key https://nlb-dns/api/webhook
+curl -k -v --cert client.crt --key client.key https://[SEU_NLB_DNS]/api/webhook
 ```
 
 ---
 
-## 📞 Suporte e Contatos
+## Contatos
 
-### 📋 Informações do Projeto
+### Informações do Projeto
 
 - **Ambiente**: AWS us-east-2
 - **Projeto**: teste-api
@@ -868,7 +868,7 @@ curl -k -v --cert client.crt --key client.key https://nlb-dns/api/webhook
 - **Domínio**: api.bodyharmony.life
 - **ECS Cluster**: teste-api-cluster
 
-### 🔗 Links Úteis
+### Links Úteis
 
 - [AWS ECS Console](https://console.aws.amazon.com/ecs/)
 - [CloudWatch Logs](https://console.aws.amazon.com/cloudwatch/home#logsV2:)

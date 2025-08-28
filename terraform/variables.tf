@@ -1,13 +1,13 @@
 variable "aws_region" {
   description = "Região da AWS para implantar os recursos."
   type        = string
-  default     = "us-east-2"
+  default     = "us-east-1"
 }
 
 variable "project_name" {
   description = "Nome do projeto, usado para nomear recursos."
   type        = string
-  default     = "teste-api"
+  default     = "minha-api"
 }
 
 variable "vpc_cidr" {
@@ -31,7 +31,7 @@ variable "private_subnets_cidr" {
 variable "acm_certificate_arn" {
   description = "ARN do certificado SSL/TLS no ACM para o ALB."
   type        = string
-  default     = "arn:aws:acm:us-east-2:693014165328:certificate/b458b57d-68d0-4d2e-a7d7-a58526e24b29"
+  default     = ""
 }
 
 variable "environment" {

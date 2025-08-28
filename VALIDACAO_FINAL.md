@@ -138,13 +138,13 @@ terraform output alb_dns_name
 
 ## CHECKLIST FINAL
 
-- [ ] **Teste 1** (Health Check): `200 OK`
-- [ ] **Teste 2** (API sem cert): `403 Forbidden`  
-- [ ] **Teste 3** (API com cert): `200 OK`
-- [ ] **Teste 4** (Endpoint raiz): `200 OK`
-- [ ] **Performance**: Tempo < 2s
-- [ ] **SSL/TLS**: Handshake bem-sucedido
-- [ ] **Certificados**: Válidos e verificados
-- [ ] **Logs**: Sem erros críticos
-- [ ] **Monitoramento**: CloudWatch funcionando
-- [ ] **Documentação**: Completa e atualizada
+- [x] **Teste 1** (Health Check): `200 OK`
+- [x] **Teste 2** (API sem cert): `403 Forbidden`  
+- [x] **Teste 3** (API com cert): `200 OK`
+- [x] **Teste 4** (Endpoint raiz): `200 OK`
+- [x] **Performance**: Tempo < 2s
+- [x] **SSL/TLS**: Handshake bem-sucedido
+- [x] **Certificados**: Válidos e verificados
+- [x] **Logs**: Sem erros críticos
+- [x] **Monitoramento**: CloudWatch funcionando
+- [x] **Documentação**: Completa e atualizada
