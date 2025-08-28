@@ -1,8 +1,8 @@
-# 📋 Template de Configuração - DevOps Interview
+# Template de Configuração - DevOps Interview
 
 Este arquivo contém todos os valores que você precisa personalizar para usar este projeto em sua própria conta AWS.
 
-## 🔧 **1. Configurações do Terraform**
+## 1. Configurações do Terraform
 
 Edite o arquivo `terraform/variables.tf` e preencha:
 
@@ -28,7 +28,7 @@ variable "acm_certificate_arn" {
 }
 ```
 
-## 🐳 **2. Scripts de Deploy**
+## 2. Scripts de Deploy
 
 ### Para `deploy.ps1`:
 ```powershell
@@ -50,7 +50,7 @@ $nginxService = "minha-api-nginx-service"          # ← Mesmo serviço Nginx
 $nginxRepo = "minha-api-nginx"                     # ← Mesmo repositório Nginx
 ```
 
-## 🌐 **3. Configuração do Nginx**
+## 3. Configuração do Nginx
 
 Edite `nginx/nginx.conf`:
 
@@ -61,7 +61,7 @@ server_name api.seudominio.com;  # ← Seu domínio OU use _ para aceitar qualqu
 proxy_pass http://api.minha-api.local:5000;  # ← api.[project_name].local:5000
 ```
 
-## 🔐 **4. Certificados SSL/mTLS**
+## 4. Certificados SSL/mTLS
 
 Edite `nginx/certs/gerar_certificados.sh`:
 
@@ -69,7 +69,7 @@ Edite `nginx/certs/gerar_certificados.sh`:
 COMMON_NAME_SERVER="api.seudominio.com"  # ← Mesmo domínio do nginx.conf OU seu IP público
 ```
 
-## 🚀 **5. Passo a Passo de Configuração**
+## 5. Passo a Passo de Configuração
 
 ### **Passo 1: Configure as variáveis do Terraform**
 ```bash
@@ -130,7 +130,7 @@ curl -k --cert ./nginx/certs/cliente-[TIMESTAMP].crt \
   -d '{"test": "data"}'
 ```
 
-## 🎯 **6. Valores de Exemplo Completos**
+## 6. Valores de Exemplo Completos
 
 ### Exemplo com projeto chamado "devops-api" na região "us-west-2":
 
@@ -167,7 +167,7 @@ proxy_pass http://api.devops-api.local:5000;
 COMMON_NAME_SERVER="api.exemplo.com"  # Ou seu IP público
 ```
 
-## ⚠️ **Importante**
+## Importante
 
 1. **Região AWS**: Use sempre a mesma região em todos os arquivos
 2. **Nome do Projeto**: Use apenas letras, números e hífens (sem espaços ou caracteres especiais)
@@ -175,7 +175,7 @@ COMMON_NAME_SERVER="api.exemplo.com"  # Ou seu IP público
 4. **Certificados**: Mantenha os arquivos `.key` seguros e nunca os compartilhe
 5. **Credenciais**: Nunca commite credenciais AWS no Git
 
-## 🆘 **Troubleshooting**
+## Troubleshooting
 
 - **Terraform apply falha**: Verifique se suas credenciais AWS têm as permissões necessárias
 - **Deploy falha**: Verifique se Docker Desktop está rodando
@@ -184,4 +184,4 @@ COMMON_NAME_SERVER="api.exemplo.com"  # Ou seu IP público
 
 ---
 
-**📞 Suporte**: Consulte `DOCUMENTACAO_IMPLEMENTACAO.md` para troubleshooting detalhado.
+**Suporte**: Consulte `DOCUMENTACAO_IMPLEMENTACAO.md` para troubleshooting detalhado.

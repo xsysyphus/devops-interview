@@ -1,6 +1,6 @@
-# 📋 Documentação Técnica - API Segura com mTLS na AWS
+# Documentação Técnica - API Segura com mTLS na AWS
 
-## 📑 Índice
+## Índice
 
 1. [Visão Geral da Arquitetura](#1-visão-geral-da-arquitetura)
 2. [Decisões Técnicas](#2-decisões-técnicas)
@@ -17,11 +17,11 @@
 
 ## 1. Visão Geral da Arquitetura
 
-### 🏗️ Componentes Principais
+### Componentes Principais
 
 A solução implementa uma API Python Flask protegida por mTLS (mutual TLS) utilizando AWS ECS Fargate como plataforma de containers. A arquitetura segue princípios de segurança por camadas e alta disponibilidade.
 
-### 📊 Diagrama da Arquitetura
+### Diagrama da Arquitetura
 
 ```
 ┌─────────────────┐    ┌──────────────────┐    ┌─────────────────┐
@@ -59,7 +59,7 @@ A solução implementa uma API Python Flask protegida por mTLS (mutual TLS) util
                        └─────────────────────────────────────────────────────────────────┘
 ```
 
-### 🔧 Stack Tecnológico
+### Stack Tecnológico
 
 - **Cloud Provider**: AWS
 - **Containers**: ECS Fargate
@@ -77,7 +77,7 @@ A solução implementa uma API Python Flask protegida por mTLS (mutual TLS) util
 
 ## 2. Decisões Técnicas
 
-### 🤔 Por que ECS Fargate?
+### Por que ECS Fargate?
 
 **Vantagens:**
 - **Serverless**: Sem gerenciamento de instâncias EC2
@@ -91,7 +91,7 @@ A solução implementa uma API Python Flask protegida por mTLS (mutual TLS) util
 - Lambda: Limitações de timeout e cold start para APIs
 - EKS: Overhead desnecessário para essa escala
 
-### 🔒 Por que Network Load Balancer (NLB)?
+### Por que Network Load Balancer (NLB)?
 
 **Decisão crítica:** Inicialmente foi implementado Application Load Balancer (ALB), mas foi migrado para NLB durante o troubleshooting.
 
@@ -104,7 +104,7 @@ A solução implementa uma API Python Flask protegida por mTLS (mutual TLS) util
 - **Performance**: Layer 4, menor latência
 - **mTLS**: Permite validação de certificado cliente no Nginx
 
-### 🔐 Por que mTLS no Nginx?
+### Por que mTLS no Nginx?
 
 **Benefícios:**
 - **Autenticação mútua**: Cliente e servidor se validam
@@ -131,7 +131,7 @@ location / {
 }
 ```
 
-### 📡 Por que Service Discovery?
+### Por que Service Discovery?
 
 **AWS Cloud Map** foi escolhido para:
 - **DNS dinâmico**: Resolução automática de IPs das tasks
@@ -143,7 +143,7 @@ location / {
 
 ## 3. Infraestrutura como Código
 
-### 📁 Estrutura do Projeto
+### Estrutura do Projeto
 
 ```
 devops-interview/
@@ -171,7 +171,7 @@ devops-interview/
 └── *.ps1               # Scripts de deploy manual
 ```
 
-### 🔧 Componentes Terraform
+### Componentes Terraform
 
 #### Network (network.tf)
 ```hcl
@@ -242,7 +242,7 @@ resource "aws_ecs_task_definition" "nginx" {
 }
 ```
 
-### 🚀 Deploy da Infraestrutura
+### Deploy da Infraestrutura
 
 ```bash
 # 1. Inicializar Terraform
@@ -260,7 +260,7 @@ terraform apply
 
 ## 4. Configuração de Segurança
 
-### 🔑 Geração de Certificados mTLS
+### Geração de Certificados mTLS
 
 #### Script de Geração (nginx/certs/gerar_certificados.sh)
 
@@ -307,7 +307,7 @@ openssl x509 -req -in cliente.csr -CA ca.crt -CAkey ca.key \
 cat server.crt ca.crt > server.fullchain.crt
 ```
 
-### 🔒 Configuração mTLS do Nginx
+### Configuração mTLS do Nginx
 
 #### nginx.conf
 ```nginx
@@ -382,7 +382,7 @@ http {
 
 ## 5. Pipeline CI/CD
 
-### 🔄 GitHub Actions
+### GitHub Actions
 
 #### .github/workflows/deploy.yml
 ```yaml
@@ -438,7 +438,7 @@ jobs:
           --force-new-deployment
 ```
 
-### 🔧 Scripts de Deploy Manual
+### Scripts de Deploy Manual
 
 #### deploy.ps1 (PowerShell)
 ```powershell
@@ -468,7 +468,7 @@ wsl aws ecs update-service --cluster $ecsCluster --service [SEU_PROJETO]-nginx-s
 
 ## 6. Comandos Úteis
 
-### 🔍 Testes e Validação
+### Testes e Validação
 
 #### Comandos de Teste Principais
 ```bash
@@ -491,7 +491,7 @@ curl -k --cert ./nginx/certs/cliente-[TIMESTAMP].crt \
   https://[SEU_NLB_DNS]/
 ```
 
-### 🔧 Comandos AWS CLI
+### Comandos AWS CLI
 
 #### ECS Management
 ```bash
@@ -532,7 +532,7 @@ aws servicediscovery list-instances --service-id srv-4odn4aaq5nbwgxoj --region [
 aws servicediscovery deregister-instance --service-id srv-4odn4aaq5nbwgxoj --instance-id INSTANCE_ID --region [SUA_REGIAO]
 ```
 
-### 🐛 Debug e Troubleshooting
+### Debug e Troubleshooting
 
 #### Verificar Certificados
 ```bash
@@ -565,7 +565,7 @@ aws logs filter-log-events --log-group-name "/ecs/teste-api/nginx" --filter-patt
 
 ## 7. Monitoramento e Observabilidade
 
-### 📊 CloudWatch Dashboard
+### CloudWatch Dashboard
 
 #### Métricas Implementadas
 - **Network Load Balancer**: ActiveFlowCount, ConsumedLCUs, HealthyHostCount
