@@ -44,3 +44,23 @@ output "api_service_discovery_dns" {
   description = "DNS interno para o serviço da API"
   value       = "api.${var.project_name}.local"
 }
+
+output "aws_region" {
+  description = "Região da AWS onde os recursos foram criados"
+  value       = var.aws_region
+}
+
+output "ecr_registry_url" {
+  description = "URL do registro ECR (sem o nome do repositório)"
+  value       = "${data.aws_caller_identity.current.account_id}.dkr.ecr.${data.aws_region.current.name}.amazonaws.com"
+}
+
+output "ecr_repository_api_name" {
+  description = "Nome do repositório ECR para a API"
+  value       = aws_ecr_repository.api.name
+}
+
+output "ecr_repository_nginx_name" {
+  description = "Nome do repositório ECR para o Nginx"
+  value       = aws_ecr_repository.nginx.name
+}

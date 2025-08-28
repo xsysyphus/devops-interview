@@ -1,13 +1,12 @@
-# --- Application Load Balancer ---
-resource "aws_alb" "main" {
-  name               = "${var.project_name}-alb"
+# --- Network Load Balancer ---
+resource "aws_lb" "main" {
+  name               = "${var.project_name}-nlb"
   internal           = false
-  load_balancer_type = "application"
-  security_groups    = [aws_security_group.alb.id]
+  load_balancer_type = "network"
   subnets            = aws_subnet.public[*].id
 
   tags = {
-    Name = "${var.project_name}-alb"
+    Name = "${var.project_name}-nlb"
   }
 }
 
@@ -15,18 +14,17 @@ resource "aws_alb" "main" {
 resource "aws_lb_target_group" "nginx" {
   name        = "${var.project_name}-nginx-tg"
   port        = 443
-  protocol    = "HTTPS"
+  protocol    = "TCP"
   vpc_id      = aws_vpc.main.id
   target_type = "ip"
 
   health_check {
-    path                = "/health"
-    protocol            = "HTTPS"
-    matcher             = "200"
+    enabled             = true
+    protocol            = "TCP"
     interval            = 30
-    timeout             = 5
-    healthy_threshold   = 2
-    unhealthy_threshold = 2
+    timeout             = 10
+    healthy_threshold   = 3
+    unhealthy_threshold = 3
   }
 
   tags = {
@@ -34,13 +32,11 @@ resource "aws_lb_target_group" "nginx" {
   }
 }
 
-# --- Listener HTTPS ---
+# --- Listener TCP ---
 resource "aws_lb_listener" "https" {
-  load_balancer_arn = aws_alb.main.arn
+  load_balancer_arn = aws_lb.main.arn
   port              = "443"
-  protocol          = "HTTPS"
-  ssl_policy        = "ELBSecurityPolicy-2016-08"
-  certificate_arn   = var.acm_certificate_arn
+  protocol          = "TCP"
 
   default_action {
     type             = "forward"
@@ -48,29 +44,15 @@ resource "aws_lb_listener" "https" {
   }
 }
 
-# --- Listener HTTP para redirecionar para HTTPS ---
-resource "aws_lb_listener" "http" {
-  load_balancer_arn = aws_alb.main.arn
-  port              = "80"
-  protocol          = "HTTP"
 
-  default_action {
-    type = "redirect"
-    redirect {
-      port        = "443"
-      protocol    = "HTTPS"
-      status_code = "HTTP_301"
-    }
-  }
-}
 
-# --- Output para o DNS do ALB ---
+# --- Output para o DNS do NLB ---
 output "alb_dns_name" {
-  description = "DNS name of the Application Load Balancer"
-  value       = aws_alb.main.dns_name
+  description = "DNS name of the Network Load Balancer"
+  value       = aws_lb.main.dns_name
 }
 
 output "alb_zone_id" {
-  description = "Zone ID of the Application Load Balancer"
-  value       = aws_alb.main.zone_id
+  description = "Zone ID of the Network Load Balancer"
+  value       = aws_lb.main.zone_id
 }

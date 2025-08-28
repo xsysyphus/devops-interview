@@ -91,12 +91,12 @@ cd devops-interview
 5. **Envie** link do repositório
 
 ### Checklist Final
-- [ ] API acessível via HTTPS
-- [ ] mTLS rejeitando requests sem certificado
-- [ ] mTLS aceitando requests com certificado válido
-- [ ] Pipeline executando sem erros
-- [ ] Documentação completa
-- [ ] Testes básicos funcionando
+- [x] API acessível via HTTPS
+- [x] mTLS rejeitando requests sem certificado  
+- [x] mTLS aceitando requests com certificado válido
+- [x] Pipeline executando sem erros
+- [x] Documentação completa
+- [x] Testes básicos funcionando
 
 ---
 

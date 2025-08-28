@@ -9,7 +9,7 @@ COPY nginx.conf /etc/nginx/nginx.conf
 
 # Copie os certificados do servidor e da CA
 # O Dockerfile deve estar no mesmo nível que o diretório 'certs'
-COPY ./certs/server.crt /etc/nginx/certs/server.crt
+COPY ./certs/server.fullchain.crt /etc/nginx/certs/server.fullchain.crt
 COPY ./certs/server.key /etc/nginx/certs/server.key
 COPY ./certs/ca.crt /etc/nginx/certs/ca.crt
 

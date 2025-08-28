@@ -21,14 +21,13 @@ resource "aws_cloudwatch_dashboard" "main" {
         height = 6,
         properties = {
           metrics = [
-            ["AWS/ApplicationELB", "RequestCount", "LoadBalancer", aws_alb.main.name, { "label" = "Total de Requisições" }],
-            [".", "HTTPCode_Target_5XX_Count", ".", ".", { "label" = "Erros 5xx do Target" }],
-            [".", "HTTPCode_Target_4XX_Count", ".", ".", { "label" = "Erros 4xx do Target" }]
+            ["AWS/NetworkELB", "ActiveFlowCount", "LoadBalancer", aws_lb.main.name, { "label" = "Conexões Ativas" }],
+            [".", "ConsumedLCUs", ".", ".", { "label" = "LCUs Consumidas" }]
           ],
           view    = "timeSeries",
           stacked = false,
           region  = var.aws_region,
-          title   = "ALB: Requisições e Erros"
+          title   = "NLB: Conexões e Uso"
         }
       },
       {
@@ -37,14 +36,13 @@ resource "aws_cloudwatch_dashboard" "main" {
         height = 6,
         properties = {
           metrics = [
-            ["AWS/ApplicationELB", "TargetConnectionErrorCount", "LoadBalancer", aws_alb.main.name, { "label" = "Erros de Conexão com Target" }],
-            [".", "HealthyHostCount", "TargetGroup", aws_lb_target_group.nginx.name, { "label" = "Hosts Saudáveis (Nginx)" }],
+            ["AWS/NetworkELB", "HealthyHostCount", "TargetGroup", aws_lb_target_group.nginx.name, { "label" = "Hosts Saudáveis (Nginx)" }],
             [".", "UnHealthyHostCount", ".", ".", { "label" = "Hosts Não Saudáveis (Nginx)" }]
           ],
           view    = "timeSeries",
           stacked = false,
           region  = var.aws_region,
-          title   = "ALB: Saúde do Target Group (Nginx)"
+          title   = "NLB: Saúde do Target Group (Nginx)"
         }
       },
       # --- Métricas do ECS Service (Nginx) ---

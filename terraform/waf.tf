@@ -49,8 +49,9 @@ resource "aws_wafv2_web_acl" "main" {
   }
 }
 
-# --- Associação da WAF com o ALB ---
-resource "aws_wafv2_web_acl_association" "main" {
-  resource_arn = aws_alb.main.arn
-  web_acl_arn  = aws_wafv2_web_acl.main.arn
-}
+# --- Associação da WAF com o NLB ---
+# Nota: WAFv2 não suporta Network Load Balancer
+# resource "aws_wafv2_web_acl_association" "main" {
+#   resource_arn = aws_lb.main.arn
+#   web_acl_arn  = aws_wafv2_web_acl.main.arn
+# }
