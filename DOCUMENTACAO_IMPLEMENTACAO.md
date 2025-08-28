@@ -868,6 +868,41 @@ curl -k -v --cert client.crt --key client.key https://[SEU_NLB_DNS]/api/webhook
 - **Domínio**: api.bodyharmony.life
 - **ECS Cluster**: teste-api-cluster
 
+### Para Avaliadores - Testando a Implementação Atual
+
+A implementação está funcionando e pode ser testada diretamente usando os comandos abaixo:
+
+#### Comandos de Teste Diretos
+
+**Teste 1 - Health Check (deve retornar 200 OK):**
+```bash
+curl -k https://api.bodyharmony.life/health
+```
+
+**Teste 2 - API sem certificado (deve retornar 403 Forbidden):**
+```bash
+curl -k https://api.bodyharmony.life/api/webhook
+```
+
+**Teste 3 - API com certificado válido:**
+Para testar com certificado, necessário o certificado cliente gerado. 
+
+#### Exemplo de comando completo com certificado:
+```bash
+curl -k --cert ./cliente.crt --key ./cliente.key \
+  https://api.bodyharmony.life/api/webhook \
+  -H "Content-Type: application/json" \
+  -d '{"test": "data"}'
+```
+
+**Resultado esperado:** `200 OK` com resposta JSON da API
+
+#### Verificação de SSL/TLS:
+```bash
+# Verificar certificado e protocolos SSL
+openssl s_client -connect api.bodyharmony.life:443 -servername api.bodyharmony.life
+```
+
 ### Links Úteis
 
 - [AWS ECS Console](https://console.aws.amazon.com/ecs/)

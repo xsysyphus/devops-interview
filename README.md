@@ -137,6 +137,23 @@ Esta implementação atende **100% dos requisitos obrigatórios** e inclui **tod
 5. **Faça deploy**: `./scripts/deploy.ps1`
 6. **Valide** seguindo `VALIDACAO_FINAL.md`
 
+### 🧪 **Teste a Implementação Funcionando:**
+
+**Para Avaliadores - A implementação está rodando e pode ser testada:**
+
+```bash
+# Teste 1: Health check (deve retornar 200 OK)
+curl -k https://api.bodyharmony.life/health
+
+# Teste 2: API sem certificado (deve retornar 403 Forbidden)
+curl -k https://api.bodyharmony.life/api/webhook
+
+# Teste 3: Verificar SSL/TLS
+openssl s_client -connect api.bodyharmony.life:443 -servername api.bodyharmony.life
+```
+
+*Para teste completo com certificado cliente, solicite o certificado de teste.*
+
 ### 📋 **Documentação Completa:**
 - **[DOCUMENTACAO_IMPLEMENTACAO.md](DOCUMENTACAO_IMPLEMENTACAO.md)**: Arquitetura, decisões técnicas, e guias detalhados
 - **[CONFIG_TEMPLATE.md](CONFIG_TEMPLATE.md)**: Template de configuração para personalização  
