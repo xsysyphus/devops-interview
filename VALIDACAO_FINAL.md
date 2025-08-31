@@ -1,6 +1,6 @@
 # VALIDAÇÃO FINAL - Guia de Testes
 
-Este arquivo contém todos os testes necessários para validar se sua implementação está funcionando corretamente.
+Este arquivo contém todos os testes necessários para validar se a implementação está funcionando corretamente.
 
 ## PRÉ-REQUISITOS
 
