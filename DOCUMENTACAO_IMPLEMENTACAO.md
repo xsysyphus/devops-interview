@@ -68,7 +68,7 @@ A solução implementa uma API Python Flask protegida por mTLS (mutual TLS) util
 - **Proxy/Gateway**: Nginx com mTLS
 - **Service Discovery**: AWS Cloud Map
 - **Registry**: Amazon ECR
-- **IaC**: Terraform
+- **IaC**: Terraform + AWS CDK (duas implementações)
 - **CI/CD**: GitHub Actions + PowerShell Scripts
 - **Monitoring**: CloudWatch
 - **Security**: WAF v2, Security Groups, mTLS
@@ -143,28 +143,36 @@ location / {
 
 ```
 devops-interview/
-├── terraform/
-│   ├── main.tf           # Provider e backend
-│   ├── variables.tf      # Variáveis globais
-│   ├── network.tf        # VPC, subnets, gateways
-│   ├── security.tf       # Security Groups
-│   ├── ecr.tf           # Container registries
-│   ├── ecs.tf           # Cluster, services, tasks
-│   ├── alb.tf           # Network Load Balancer
-│   ├── waf.tf           # Web Application Firewall
-│   ├── monitoring.tf    # CloudWatch dashboards
-│   └── outputs.tf       # Outputs do Terraform
+├── terraform/                    # Implementação IaC com Terraform
+│   ├── main.tf                   # Provider e backend
+│   ├── variables.tf              # Variáveis globais
+│   ├── network.tf                # VPC, subnets, gateways
+│   ├── security.tf               # Security Groups
+│   ├── ecr.tf                   # Container registries
+│   ├── ecs.tf                   # Cluster, services, tasks
+│   ├── alb.tf                   # Network Load Balancer
+│   ├── waf.tf                   # Web Application Firewall
+│   ├── monitoring.tf            # CloudWatch dashboards
+│   └── outputs.tf               # Outputs do Terraform
+├── cdk/                         # Implementação IaC com AWS CDK
+│   ├── app.ts                   # Aplicação principal CDK
+│   ├── lib/
+│   │   └── devops-interview-stack.ts  # Stack principal
+│   ├── package.json             # Dependências Node.js
+│   ├── tsconfig.json            # Configuração TypeScript
+│   └── deploy-cdk.ps1           # Script de deploy CDK
 ├── nginx/
-│   ├── Dockerfile       # Imagem Nginx customizada
-│   ├── nginx.conf       # Configuração mTLS
-│   └── certs/           # Certificados SSL/mTLS
+│   ├── Dockerfile               # Imagem Nginx customizada
+│   ├── nginx.conf               # Configuração mTLS
+│   └── certs/                   # Certificados SSL/mTLS
 ├── api/
-│   ├── app.py          # Aplicação Python Flask
-│   ├── Dockerfile      # Imagem da API
-│   └── requirements.txt # Dependências Python
+│   ├── app.py                  # Aplicação Python Flask
+│   ├── Dockerfile              # Imagem da API
+│   └── requirements.txt        # Dependências Python
+├── scripts/                     # Scripts de deploy manual
 ├── .github/workflows/
-│   └── deploy.yml      # Pipeline GitHub Actions
-└── *.ps1               # Scripts de deploy manual
+│   └── deploy.yml              # Pipeline GitHub Actions
+└── COMPARACAO_CDK_TERRAFORM.md # Comparação das implementações
 ```
 
 ### Componentes Terraform
@@ -240,6 +248,7 @@ resource "aws_ecs_task_definition" "nginx" {
 
 ### Deploy da Infraestrutura
 
+#### Opção 1: Terraform (Implementação Original)
 ```bash
 # 1. Inicializar Terraform
 cd terraform
@@ -251,6 +260,30 @@ terraform plan
 # 3. Aplicar infraestrutura
 terraform apply
 ```
+
+#### Opção 2: AWS CDK (Implementação Alternativa)
+```bash
+# 1. Instalar dependências
+cd cdk
+npm install
+
+# 2. Bootstrap CDK (primeira vez)
+cdk bootstrap
+
+# 3. Deploy da infraestrutura
+cdk deploy --require-approval never
+
+# OU usar script automatizado
+./deploy-cdk.ps1
+```
+
+#### Comparação das Implementações
+- **Terraform**: HCL declarativo, multi-cloud, state management
+- **CDK**: TypeScript programático, AWS native, type safety
+- **Ambas**: Criam exatamente a mesma infraestrutura
+- **Escolha**: Baseada na preferência da equipe
+
+Consulte `COMPARACAO_CDK_TERRAFORM.md` para análise detalhada.
 
 ---
 
@@ -561,53 +594,256 @@ aws logs filter-log-events --log-group-name "/ecs/teste-api/nginx" --filter-patt
 
 ## 7. Monitoramento e Observabilidade
 
-### CloudWatch Dashboard
+### 📊 CloudWatch Dashboard
 
-#### Métricas Implementadas
-- **Network Load Balancer**: ActiveFlowCount, ConsumedLCUs, HealthyHostCount
-- **ECS Services**: CPUUtilization, MemoryUtilization por serviço
-- **WAF**: AllowedRequests, BlockedRequests (quando habilitado)
+#### Dashboard Criado Automaticamente
+Nome: `teste-api-dashboard-prod`
 
-#### dashboard.tf
-```hcl
-resource "aws_cloudwatch_dashboard" "main" {
-  dashboard_name = "${var.project_name}-dashboard-${var.environment}"
+**Como Acessar:**
+1. AWS Console → CloudWatch
+2. Dashboards → `teste-api-dashboard-prod`
+3. URL direta: `https://console.aws.amazon.com/cloudwatch/home?region=us-east-2#dashboards:name=teste-api-dashboard-prod`
 
-  dashboard_body = jsonencode({
-    widgets = [
-      {
-        type   = "metric"
-        properties = {
-          metrics = [
-            ["AWS/NetworkELB", "ActiveFlowCount", "LoadBalancer", aws_lb.main.name],
-            ["AWS/ECS", "CPUUtilization", "ClusterName", aws_ecs_cluster.main.name, "ServiceName", aws_ecs_service.nginx.name]
-          ]
-          view    = "timeSeries"
-          region  = var.aws_region
-          title   = "Infrastructure Metrics"
-        }
-      }
-    ]
-  })
-}
+#### Widgets Implementados
+
+**1. Network Load Balancer Metrics**
+- `ActiveFlowCount`: Conexões ativas no NLB
+- `ConsumedLCUs`: Load Balancer Capacity Units consumidas
+- `HealthyHostCount`: Instâncias saudáveis no target group
+- `NewFlowCount`: Novas conexões por segundo
+
+**2. ECS Services Metrics**
+- `CPUUtilization`: CPU dos serviços nginx e api
+- `MemoryUtilization`: Memória dos serviços nginx e api
+- `TaskCount`: Número de tasks rodando
+- `ServiceEvents`: Eventos dos serviços
+
+**3. WAF v2 Metrics (quando habilitado)**
+- `AllowedRequests`: Requests permitidas
+- `BlockedRequests`: Requests bloqueadas por rate limiting
+- `SampledRequests`: Amostras de requests analisadas
+
+### 📋 Log Groups Criados
+
+#### Como Acessar os Logs:
+**AWS Console → CloudWatch → Log Groups**
+
+#### 1. Logs do Nginx (`/ecs/teste-api/nginx`)
+```
+**Como acessar:**
+1. CloudWatch → Log Groups → `/ecs/teste-api/nginx`
+2. Clique em qualquer Log Stream para ver logs em tempo real
+
+**Tipos de logs:**
+- Access logs: Todas as requisições HTTP/HTTPS
+- Error logs: Erros de configuração, SSL, proxy
+- mTLS logs: Status de verificação de certificados
+
+**Exemplo de logs importantes:**
+```
+# Access log com mTLS bem-sucedido
+10.0.1.15 - - [28/Aug/2025:14:48:05 +0000] "POST /api/webhook HTTP/2.0" 200 45
+
+# Error log de certificado inválido  
+2025/08/28 14:48:05 [error] SSL_do_handshake() failed (SSL: error:14094412)
+
+# mTLS verification status
+X-SSL-Verify-Status: SUCCESS
 ```
 
-### 🔍 Log Groups
-- `/ecs/teste-api/nginx`: Logs do Nginx (access e error)
-- `/ecs/teste-api/api`: Logs da aplicação Python Flask
+#### 2. Logs da API (`/ecs/teste-api/api`)
+```
+**Como acessar:**
+1. CloudWatch → Log Groups → `/ecs/teste-api/api`
+2. Selecione o Log Stream mais recente
 
-### 📈 Alertas Sugeridos
+**Conteúdo dos logs:**
+- Requests recebidos pela API Flask
+- Erros de parsing JSON
+- Status codes de resposta
+- Stack traces de erros Python
+
+**Exemplo de logs:**
+```
+[2025-08-28 14:48:05] INFO: Webhook received: {"event": "test"}
+[2025-08-28 14:48:05] INFO: Response sent: {"status": "ok"}
+[2025-08-28 14:48:06] ERROR: Invalid JSON in request body
+```
+
+### 🔍 Como Monitorar em Tempo Real
+
+#### 1. CloudWatch Live Tail
 ```bash
-# CPU alta no ECS
-aws cloudwatch put-metric-alarm \
-  --alarm-name "ECS-High-CPU" \
-  --alarm-description "ECS CPU Utilization > 80%" \
-  --metric-name CPUUtilization \
-  --namespace AWS/ECS \
-  --statistic Average \
-  --period 300 \
-  --threshold 80 \
-  --comparison-operator GreaterThanThreshold
+# Nginx logs em tempo real
+aws logs tail /ecs/teste-api/nginx --follow --region us-east-2
+
+# API logs em tempo real  
+aws logs tail /ecs/teste-api/api --follow --region us-east-2
+
+# Ambos os logs juntos
+aws logs tail /ecs/teste-api/nginx /ecs/teste-api/api --follow --region us-east-2
+```
+
+#### 2. CloudWatch Insights - Queries Úteis
+
+**Acesso:** CloudWatch → Logs → Insights
+
+**Query 1 - Requests com erro mTLS:**
+```sql
+fields @timestamp, @message
+| filter @message like /SSL_do_handshake/
+| sort @timestamp desc
+| limit 20
+```
+
+**Query 2 - API responses por status:**
+```sql
+fields @timestamp, @message  
+| filter @message like /Response sent/
+| stats count() by bin(5m)
+| sort @timestamp desc
+```
+
+**Query 3 - Análise de performance:**
+```sql
+fields @timestamp, @duration
+| filter @type = "REPORT"
+| stats avg(@duration), max(@duration), min(@duration) by bin(5m)
+```
+
+### 📈 Métricas Personalizadas no CloudWatch
+
+#### Como Visualizar Métricas:
+**AWS Console → CloudWatch → Metrics → All Metrics**
+
+#### 1. ECS Metrics
+- **Namespace:** `AWS/ECS`
+- **Dimensões:** ClusterName, ServiceName
+- **Métricas Principais:**
+  - `CPUUtilization`: % CPU usado
+  - `MemoryUtilization`: % Memória usada
+  - `TaskCount`: Número de tasks
+
+#### 2. Network Load Balancer Metrics  
+- **Namespace:** `AWS/NetworkELB`
+- **Dimensões:** LoadBalancer, TargetGroup
+- **Métricas Principais:**
+  - `ActiveFlowCount`: Conexões ativas
+  - `HealthyHostCount`: Targets saudáveis
+  - `UnHealthyHostCount`: Targets com problema
+
+#### 3. Application Load Balancer Target Group
+- **Namespace:** `AWS/ApplicationELB`
+- **Dimensões:** TargetGroup, LoadBalancer
+- **Métricas Principais:**
+  - `RequestCount`: Total de requests
+  - `TargetResponseTime`: Latência média
+  - `HTTPCode_Target_2XX_Count`: Responses 2xx
+
+### 🚨 Alertas Configurados
+
+#### Como Ver Alarmes:
+**AWS Console → CloudWatch → Alarms**
+
+### 🔧 Service Discovery - Como Monitorar
+
+#### Como Acessar:
+**AWS Console → Cloud Map → Namespaces**
+
+#### Namespace Criado: `teste-api.local`
+- **Tipo:** DNS privado
+- **VPC:** Associado à VPC principal
+- **Serviços registrados:**
+  - `api.teste-api.local` (porta 5000)
+
+#### Como Verificar Registros DNS:
+```bash
+# Dentro de um container ECS
+nslookup api.teste-api.local
+dig api.teste-api.local
+
+# Via AWS CLI
+aws servicediscovery list-services --region us-east-2
+aws servicediscovery get-service --id srv-[ID] --region us-east-2
+```
+
+### 🏥 Health Checks - Como Monitorar
+
+#### 1. Network Load Balancer Health Checks
+**Como acessar:** EC2 → Load Balancers → teste-api-nlb → Target Groups
+
+**Configuração atual:**
+- **Protocol:** HTTPS
+- **Path:** `/health`  
+- **Port:** 443
+- **Interval:** 30 segundos
+- **Timeout:** 10 segundos
+- **Healthy threshold:** 2
+- **Unhealthy threshold:** 2
+
+#### 2. ECS Service Health Checks
+**Como acessar:** ECS → Clusters → teste-api-cluster → Services
+
+**Nginx Service:**
+- **Health check command:** `curl -f https://localhost:443/health || exit 1`
+- **Interval:** 30s
+- **Timeout:** 5s  
+- **Start period:** 60s
+
+**API Service:**
+- **Health check command:** `curl -f http://localhost:5000/health || exit 1`
+- **Interval:** 30s
+- **Timeout:** 5s
+- **Start period:** 30s
+
+### 🔐 Security Monitoring
+
+#### 1. WAF v2 - Como Monitorar
+**AWS Console → WAF & Shield → Web ACLs → teste-api-waf**
+
+**Dashboards disponíveis:**
+- **Sampled requests:** Últimas 3 horas de requests
+- **Metrics:** Allowed vs Blocked requests
+- **Rules:** Performance de cada regra
+
+#### 2. VPC Flow Logs (se habilitado)
+**AWS Console → VPC → Flow Logs**
+
+**Como habilitar:**
+```bash
+aws ec2 create-flow-logs \
+  --resource-type VPC \
+  --resource-ids vpc-[ID] \
+  --traffic-type ALL \
+  --log-destination-type cloud-watch-logs \
+  --log-group-name /aws/vpc/flowlogs
+```
+
+### 📱 Comandos Úteis para Troubleshooting
+
+#### Verificar Status Geral:
+```bash
+# Status do cluster ECS
+aws ecs describe-clusters --clusters teste-api-cluster --region us-east-2
+
+# Status dos serviços
+aws ecs describe-services --cluster teste-api-cluster --services teste-api-nginx teste-api-api --region us-east-2
+
+# Status do Load Balancer
+aws elbv2 describe-load-balancers --names teste-api-nlb --region us-east-2
+
+# Health dos targets
+aws elbv2 describe-target-health --target-group-arn arn:aws:elasticloadbalancing:us-east-2:[ACCOUNT]:targetgroup/teste-api-nginx-tg/[ID] --region us-east-2
+```
+
+#### Logs em Tempo Real:
+```bash
+# Últimas 100 linhas dos logs
+aws logs tail /ecs/teste-api/nginx --since 1h --region us-east-2
+aws logs tail /ecs/teste-api/api --since 1h --region us-east-2
+
+# Seguir logs em tempo real
+aws logs tail /ecs/teste-api/nginx --follow --region us-east-2
 ```
 
 ---
@@ -818,7 +1054,7 @@ aws configure
 aws sts get-caller-identity
 ```
 
-### 🔧 Comandos de Debug Essenciais
+### Comandos de Debug Essenciais
 
 #### Verificar Status Geral
 ```bash
@@ -858,7 +1094,12 @@ curl -k -v --cert client.crt --key client.key https://[SEU_NLB_DNS]/api/webhook
 
 ---
 
-## Contatos
+### Autor
+
+- **Nome**: Fidêncio Vieira
+- **Email**: juniorx1xd@gmail.com
+- **LinkedIn**: [fvdjunior](https://www.linkedin.com/in/fvdjunior/)
+- **GitHub**: [xsysyphus](https://github.com/xsysyphus)
 
 ### Informações do Projeto
 
@@ -868,7 +1109,7 @@ curl -k -v --cert client.crt --key client.key https://[SEU_NLB_DNS]/api/webhook
 - **Domínio**: api.bodyharmony.life
 - **ECS Cluster**: teste-api-cluster
 
-### Para Avaliadores - Testando a Implementação Atual
+### Testando a Implementação Atual
 
 A implementação está funcionando e pode ser testada diretamente usando os comandos abaixo:
 
@@ -902,10 +1143,3 @@ curl -k --cert ./cliente.crt --key ./cliente.key \
 # Verificar certificado e protocolos SSL
 openssl s_client -connect api.bodyharmony.life:443 -servername api.bodyharmony.life
 ```
-
-### Links Úteis
-
-- [AWS ECS Console](https://console.aws.amazon.com/ecs/)
-- [CloudWatch Logs](https://console.aws.amazon.com/cloudwatch/home#logsV2:)
-- [ECR Repositories](https://console.aws.amazon.com/ecr/repositories)
-- [Load Balancers](https://console.aws.amazon.com/ec2/v2/home#LoadBalancers:)
