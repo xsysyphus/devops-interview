@@ -306,8 +306,9 @@ Todos os logs (`stdout`/`stderr`) dos contêineres são enviados para grupos de 
 
 **Comando útil para logs em tempo real:**
 ```bash
-# Acompanhe os logs de ambos os serviços simultaneamente
-aws logs tail /ecs/teste-api/nginx /ecs/teste-api/api --follow
+# Acompanhe os logs de ambos os serviços 
+aws logs tail /ecs/teste-api/nginx --since 1h
+aws logs tail /ecs/teste-api/api --since 1h
 ```
 
 ### Health Checks
