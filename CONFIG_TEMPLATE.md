@@ -1,10 +1,10 @@
 # Template de Configuração - DevOps Interview
 
-Este arquivo contém todos os valores que você precisa personalizar para usar este projeto em sua própria conta AWS.
+Este arquivo contém todos os valores que você precisa personalizar para colocar o projeto em execução na sua conta AWS. O fluxo de trabalho principal utiliza o pipeline de CI/CD do GitHub Actions.
 
 ## 1. Configurações do Terraform
 
-Edite o arquivo `terraform/variables.tf` e preencha:
+Edite o arquivo `terraform/variables.tf` com os valores da sua conta.
 
 ### Variáveis Obrigatórias:
 ```hcl
@@ -17,43 +17,22 @@ variable "project_name" {
 }
 ```
 
-### Variáveis Opcionais (podem manter os padrões):
-```hcl
-variable "vpc_cidr" {
-  default = "10.0.0.0/16"      # ← CIDR da sua VPC (mantenha se não souber)
-}
+## 2. Configurações do Pipeline (GitHub Actions)
 
-variable "acm_certificate_arn" {
-  default = ""                 # ← ARN do certificado ACM (apenas se tiver domínio customizado)
-}
-```
+Para que o pipeline de CI/CD (`.github/workflows/deploy.yml`) funcione, você precisa configurar a autenticação segura (OIDC) entre o GitHub e a AWS.
 
-## 2. Scripts de Deploy
+Siga as instruções detalhadas nos comentários do arquivo `deploy.yml` para criar:
+1.  Um **Provedor de Identidade OIDC** no IAM da AWS.
+2.  Uma **Role no IAM** para o GitHub Actions assumir.
 
-### Para `deploy.ps1`:
-```powershell
-$awsRegion = "us-east-1"                           # ← Mesma região do Terraform
-$ecrRegistryUrl = "123456789012.dkr.ecr.us-east-1.amazonaws.com"  # ← Obtido com: terraform output ecr_registry_url
-$ecrRepositoryApi = "minha-api-api"                # ← [project_name]-api
-$ecrRepositoryNginx = "minha-api-nginx"            # ← [project_name]-nginx
-$ecsClusterName = "minha-api-cluster"              # ← [project_name]-cluster
-$ecsServiceApi = "minha-api-api-service"           # ← [project_name]-api-service
-$ecsServiceNginx = "minha-api-nginx-service"       # ← [project_name]-nginx-service
-```
+Depois de criar a role, adicione os seguintes **Secrets** no seu repositório do GitHub (`Settings > Secrets and variables > Actions`):
 
-### Para `deploy_nginx_only.ps1`:
-```powershell
-$awsRegion = "us-east-1"                           # ← Mesma região
-$ecrRegistry = "123456789012.dkr.ecr.us-east-1.amazonaws.com"     # ← Mesma URL do ECR
-$ecsCluster = "minha-api-cluster"                  # ← Mesmo cluster
-$nginxService = "minha-api-nginx-service"          # ← Mesmo serviço Nginx
-$nginxRepo = "minha-api-nginx"                     # ← Mesmo repositório Nginx
-```
+-   `AWS_REGION`: A região AWS que você configurou no Terraform (ex: `us-east-1`).
+-   `AWS_IAM_ROLE_ARN`: O ARN da role do IAM que você criou (ex: `arn:aws:iam::123456789012:role/GitHubActions_ECS_DeployRole`).
 
-## 3. Configuração do Nginx
+## 3. Configuração do Nginx e Certificados
 
-Edite `nginx/nginx.conf`:
-
+### Nginx (`nginx/nginx.conf`):
 ```nginx
 server_name api.seudominio.com;  # ← Seu domínio OU use _ para aceitar qualquer host
 
@@ -61,127 +40,78 @@ server_name api.seudominio.com;  # ← Seu domínio OU use _ para aceitar qualqu
 proxy_pass http://api.minha-api.local:5000;  # ← api.[project_name].local:5000
 ```
 
-## 4. Certificados SSL/mTLS
-
-Edite `nginx/certs/gerar_certificados.sh`:
-
+### Certificados (`nginx/certs/gerar_certificados.sh`):
 ```bash
-COMMON_NAME_SERVER="api.seudominio.com"  # ← Mesmo domínio do nginx.conf OU seu IP público
+COMMON_NAME_SERVER="api.seudominio.com"  # ← Mesmo domínio do nginx.conf OU o DNS do NLB
 ```
 
-## 5. Passo a Passo de Configuração
+## 4. Passo a Passo de Configuração
 
-### **Passo 1: Configure as variáveis do Terraform**
+### **Passo 1: Provisionar a Infraestrutura com Terraform**
 ```bash
+# Navegue até a pasta do Terraform
 cd terraform
-# Edite variables.tf com seus valores
+
+# Edite o arquivo variables.tf com seus valores
+# ...
+
+# Inicialize, planeje e aplique
 terraform init
-terraform plan    # Revise o que será criado
-terraform apply   # Confirme com 'yes'
+terraform plan
+terraform apply --auto-approve
 ```
 
-### **Passo 2: Obtenha os outputs do Terraform**
+### **Passo 2: Obter o DNS do Load Balancer**
+Após o `terraform apply` ser concluído, anote o DNS do NLB.
 ```bash
-terraform output
-# Anote os valores:
-# - ecr_registry_url
-# - alb_dns_name (DNS do seu Load Balancer)
+terraform output alb_dns_name
 ```
 
-### **Passo 3: Gere os certificados SSL/mTLS**
+### **Passo 3: Gerar os Certificados SSL/mTLS**
+Use o DNS do NLB obtido no passo anterior como `COMMON_NAME_SERVER`.
 ```bash
+# Edite o COMMON_NAME_SERVER em nginx/certs/gerar_certificados.sh
+# ...
+
+# Navegue até a pasta e execute o script
 cd ../nginx/certs
-# No Windows/PowerShell: wsl bash gerar_certificados.sh
-# No Linux/Mac: bash gerar_certificados.sh
+bash gerar_certificados.sh
 ```
+**Importante:** Após gerar os certificados, a imagem do Nginx precisa ser reconstruída para incluí-los.
 
-### **Passo 4: Configure os scripts de deploy**
-- Edite `deploy.ps1` com os valores obtidos no Passo 2
-- Edite `deploy_nginx_only.ps1` com os mesmos valores
+### **Passo 4: Configurar os Secrets do GitHub Actions**
+Siga as instruções da Seção 2 deste guia para configurar os secrets `AWS_REGION` e `AWS_IAM_ROLE_ARN` no seu repositório.
 
-### **Passo 5: Configure suas credenciais AWS**
+### **Passo 5: Acionar o Pipeline**
+Faça um `git commit` e `git push` das suas alterações (incluindo os novos certificados) para a branch `main`.
 ```bash
-aws configure
-# AWS Access Key ID: [SUA_ACCESS_KEY]
-# AWS Secret Access Key: [SUA_SECRET_KEY]
-# Default region: [SUA_REGIAO]
-# Default output format: json
+git add .
+git commit -m "Configuração inicial e geração de certificados"
+git push origin main
 ```
+O pipeline do GitHub Actions será acionado automaticamente, construirá as imagens e fará o deploy na infraestrutura que você provisionou.
 
-### **Passo 6: Faça o primeiro deploy**
-```powershell
-# No PowerShell (Windows)
-./deploy.ps1
-```
-
-### **Passo 7: Teste sua API**
+### **Passo 6: Testar a API**
 ```bash
+# Use o DNS do NLB para testar
+NLB_DNS=$(terraform -chdir=./terraform output -raw alb_dns_name)
+
 # Health check (deve retornar 200)
-curl -k https://[SEU_NLB_DNS]/health
+curl -k https://$NLB_DNS/health
 
 # API sem certificado (deve retornar 403)
-curl -k https://[SEU_NLB_DNS]/api/webhook
+curl -k https://$NLB_DNS/api/webhook
 
 # API com certificado (deve retornar 200)
-curl -k --cert ./nginx/certs/cliente-[TIMESTAMP].crt \
-  --key ./nginx/certs/cliente-[TIMESTAMP].key \
-  https://[SEU_NLB_DNS]/api/webhook \
+curl -k --cert ./nginx/certs/cliente-*.crt \
+  --key ./nginx/certs/cliente-*.key \
+  https://$NLB_DNS/api/webhook \
   -H "Content-Type: application/json" \
   -d '{"test": "data"}'
 ```
 
-## 6. Valores de Exemplo Completos
+## 5. Informações Importantes
 
-### Exemplo com projeto chamado "devops-api" na região "us-west-2":
-
-**terraform/variables.tf:**
-```hcl
-variable "aws_region" {
-  default = "us-west-2"
-}
-
-variable "project_name" {
-  default = "devops-api"
-}
-```
-
-**deploy.ps1:**
-```powershell
-$awsRegion = "us-west-2"
-$ecrRegistryUrl = "123456789012.dkr.ecr.us-west-2.amazonaws.com"
-$ecrRepositoryApi = "devops-api-api"
-$ecrRepositoryNginx = "devops-api-nginx"
-$ecsClusterName = "devops-api-cluster"
-$ecsServiceApi = "devops-api-api-service"
-$ecsServiceNginx = "devops-api-nginx-service"
-```
-
-**nginx/nginx.conf:**
-```nginx
-server_name _;  # Aceita qualquer host (sem domínio customizado)
-proxy_pass http://api.devops-api.local:5000;
-```
-
-**nginx/certs/gerar_certificados.sh:**
-```bash
-COMMON_NAME_SERVER="api.exemplo.com"  # Ou seu IP público
-```
-
-## Importante
-
-1. **Região AWS**: Use sempre a mesma região em todos os arquivos
-2. **Nome do Projeto**: Use apenas letras, números e hífens (sem espaços ou caracteres especiais)
-3. **Domínio**: Se não tiver domínio próprio, use `_` no server_name do Nginx
-4. **Certificados**: Mantenha os arquivos `.key` seguros e nunca os compartilhe
-5. **Credenciais**: Nunca commite credenciais AWS no Git
-
-## Troubleshooting
-
-- **Terraform apply falha**: Verifique se suas credenciais AWS têm as permissões necessárias
-- **Deploy falha**: Verifique se Docker Desktop está rodando
-- **Teste 403**: Verifique se os certificados foram gerados corretamente
-- **Teste 502/504**: Aguarde alguns minutos para os serviços subirem completamente
-
----
-
-**Suporte**: Consulte `DOCUMENTACAO_IMPLEMENTACAO.md` para troubleshooting detalhado.
+-   **Região AWS**: Use sempre a mesma região no Terraform e nos secrets do GitHub.
+-   **Certificados**: Os certificados gerados são para fins de teste. Em um ambiente de produção, utilize uma infraestrutura de PKI gerenciada.
+-   **Credenciais**: Nunca commite credenciais estáticas da AWS no Git. O método OIDC utilizado é a prática recomendada.

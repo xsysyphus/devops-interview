@@ -1,0 +1,122 @@
+# CI/CD Pipeline para AWS ECS com Autenticação Segura (OIDC)
+#
+# ----------------------------------------------------------------------------------
+# 📖 INSTRUÇÕES DE CONFIGURAÇÃO (FAZER UMA ÚNICA VEZ):
+#
+# Para que este pipeline funcione, você precisa configurar o GitHub para se autenticar
+# na sua conta AWS usando OpenID Connect (OIDC). Isso é mais seguro do que
+# usar chaves de acesso de longa duração.
+#
+# Siga este guia oficial da AWS:
+# https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_providers_create_oidc.html
+#
+# 1. CRIE O PROVEDOR DE IDENTIDADE OIDC NA AWS:
+#    - Vá para o IAM no Console da AWS -> Provedores de Identidade.
+#    - Clique em "Adicionar Provedor".
+#    - Tipo de provedor: OpenID Connect.
+#    - URL do provedor: https://token.actions.githubusercontent.com
+#    - Clique em "Obter thumbprint".
+#    - Público: sts.amazonaws.com
+#
+# 2. CRIE UMA ROLE NO IAM PARA O GITHUB ACTIONS:
+#    - Vá para o IAM -> Funções -> "Criar função".
+#    - Tipo de entidade confiável: "Identidade da Web".
+#    - Provedor de identidade: selecione o que você criou no passo 1.
+#    - Público: sts.amazonaws.com
+#    - Clique em "Avançar".
+#    - Adicione as seguintes permissões (crie uma política ou use as gerenciadas):
+#      - AmazonEC2ContainerRegistryFullAccess (ou mais restritiva para seus repositórios)
+#      - AmazonECS_FullAccess (ou mais restritiva para seus clusters/serviços)
+#      - IamPassRole (se suas tarefas ECS usarem roles)
+#    - Dê um nome à role (ex: GitHubActions_ECS_DeployRole).
+#
+# 3. CONFIGURE OS SECRETS NO REPOSITÓRIO GITHUB:
+#    - Vá para o seu repositório no GitHub -> Settings -> Secrets and variables -> Actions.
+#    - Crie os seguintes secrets:
+#      - AWS_REGION: A região onde sua infraestrutura está (ex: us-east-1).
+#      - AWS_IAM_ROLE_ARN: O ARN da role que você criou no passo 2.
+# ----------------------------------------------------------------------------------
+
+name: Deploy to AWS ECS
+
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+# Permissões necessárias para autenticação OIDC e leitura de metadados do repositório.
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  deploy:
+    name: Build, Push and Deploy
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Configure AWS Credentials using OIDC
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_IAM_ROLE_ARN }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.5.0 # Use uma versão compatível com seu estado
+
+      - name: Terraform Init
+        id: init
+        run: terraform -chdir=./terraform init
+
+      - name: Get Terraform Outputs
+        id: terraform-outputs
+        run: |
+          echo "ecr_registry_url=$(terraform -chdir=./terraform output -raw ecr_registry_url)" >> $GITHUB_ENV
+          echo "ecr_repository_api_name=$(terraform -chdir=./terraform output -raw ecr_repository_api_name)" >> $GITHUB_ENV
+          echo "ecr_repository_nginx_name=$(terraform -chdir=./terraform output -raw ecr_repository_nginx_name)" >> $GITHUB_ENV
+          echo "ecs_cluster_name=$(terraform -chdir=./terraform output -raw ecs_cluster_name)" >> $GITHUB_ENV
+          echo "ecs_service_api_name=$(terraform -chdir=./terraform output -raw ecs_service_api_name)" >> $GITHUB_ENV
+          echo "ecs_service_nginx_name=$(terraform -chdir=./terraform output -raw ecs_service_nginx_name)" >> $GITHUB_ENV
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build, tag, and push API image to Amazon ECR
+        id: build-image-api
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          docker build -t $ECR_REGISTRY/${{ env.ecr_repository_api_name }}:$IMAGE_TAG ./api
+          docker tag $ECR_REGISTRY/${{ env.ecr_repository_api_name }}:$IMAGE_TAG $ECR_REGISTRY/${{ env.ecr_repository_api_name }}:latest
+          docker push $ECR_REGISTRY/${{ env.ecr_repository_api_name }} --all-tags
+          echo "image=$ECR_REGISTRY/${{ env.ecr_repository_api_name }}:$IMAGE_TAG" >> $GITHUB_OUTPUT
+
+      - name: Build, tag, and push Nginx image to Amazon ECR
+        id: build-image-nginx
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          docker build -t $ECR_REGISTRY/${{ env.ecr_repository_nginx_name }}:$IMAGE_TAG ./nginx
+          docker tag $ECR_REGISTRY/${{ env.ecr_repository_nginx_name }}:$IMAGE_TAG $ECR_REGISTRY/${{ env.ecr_repository_nginx_name }}:latest
+          docker push $ECR_REGISTRY/${{ env.ecr_repository_nginx_name }} --all-tags
+          echo "image=$ECR_REGISTRY/${{ env.ecr_repository_nginx_name }}:$IMAGE_TAG" >> $GITHUB_OUTPUT
+
+      - name: Force new ECS deployment for API service
+        run: |
+          aws ecs update-service --cluster ${{ env.ecs_cluster_name }} --service ${{ env.ecs_service_api_name }} --force-new-deployment
+        
+      - name: Force new ECS deployment for Nginx service
+        run: |
+          aws ecs update-service --cluster ${{ env.ecs_cluster_name }} --service ${{ env.ecs_service_nginx_name }} --force-new-deployment
+
+      - name: Logout of Amazon ECR
+        if: always()
+        run: docker logout ${{ steps.login-ecr.outputs.registry }}
