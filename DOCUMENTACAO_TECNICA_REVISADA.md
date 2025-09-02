@@ -102,10 +102,6 @@ graph TD
     style NLB fill:#ffaf7a,stroke:#333,stroke-width:2px
     style NginxContainer fill:#90ee90,stroke:#333,stroke-width:2px
     style ApiContainer fill:#90ee90,stroke:#333,stroke-width:2px
-
-    subgraph "AWS Cloud"
-        style "AWS Cloud" fill:#f9f9f9
-    end
 ```
 
 ### Decisões de Implementação Chave
