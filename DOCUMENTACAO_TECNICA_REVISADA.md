@@ -99,8 +99,9 @@ graph TD
     NLB -- Encaminha tráfego TCP --> NginxService
     ServiceDiscovery -- Resolve para --> ApiTask
 
-    style NLB fill:#f9f,stroke:#333,stroke-width:2px
-    style NginxContainer fill:#bbf,stroke:#333,stroke-width:2px
+    style NLB fill:lightblue,stroke:#333,stroke-width:2px
+    style NginxContainer fill:lightgreen,stroke:#333,stroke-width:2px
+    style ApiContainer fill:lightgreen,stroke:#333,stroke-width:2px
 ```
 
 ### Decisões de Implementação Chave
